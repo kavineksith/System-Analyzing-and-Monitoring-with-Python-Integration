@@ -46,9 +46,6 @@ This Python script provides comprehensive system monitoring capabilities, offeri
 2. **Monitoring**: View the output to monitor various system aspects such as battery usage, CPU usage, memory usage, network statistics, etc.
 3. **Reports**: Reports are generated with date-time stamps for reference.
 
-## License
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
 ## Conclusion
 The System Monitoring script offers a comprehensive solution for monitoring various aspects of system performance and configuration. With its extensive functionalities and user-friendly interface, it serves as a valuable tool for system administrators, developers, and enthusiasts to gain insights into system behavior and make informed decisions regarding system management and optimization.
 
