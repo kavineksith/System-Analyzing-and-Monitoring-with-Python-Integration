@@ -2,41 +2,66 @@ import os
 import psutil
 import platform
 import datetime
-from report_signatures import generated_report
+from report_signatures import TimeStampGenerator
 import sys
 
-def system_info():
-    os_name = os.name
-    os_platfrom = platform.system()
-    os_release = platform.release()
 
-def check_reboot():
-    location = os.path.exists('run/reboot-required')
-    if location == True:
-        return "Pending Reboot."
-    else:
-        return "No pending Reboot."
+class SystemInfo:
+    def __init__(self):
+        pass
 
-def check_bootTime():
-    boot_time = psutil.boot_time()
-    print("System Boot Time : {} seconds.".format(boot_time))
-    print('System Boot Time : {}'.format(datetime.datetime.fromtimestamp(boot_time).strftime("%Y-%m-%d %H:%M:%S")))
+    def get_os_info(self):
+        try:
+            os_name = os.name
+            os_platform = platform.system()
+            os_release = platform.release()
+            return os_name, os_platform, os_release
+        except Exception as e:
+            raise RuntimeError("Error fetching OS information:", e)
 
-def user_profiles():
-    users = psutil.users()
-    for value in users:
-        print("Users : {}".format(value[0]))
+    def check_reboot(self):
+        try:
+            location = os.path.exists('run/reboot-required')
+            return "Pending Reboot." if location else "No pending Reboot."
+        except Exception as e:
+            raise RuntimeError("Error checking reboot status:", e)
 
-def systemReport():
-    print('----- System Info Statistics -----\n')
-    print(' -- Reboot Status -- ')
-    print(f'Status : {check_reboot()}')
-    print('\n -- System BootTime Analysis -- ')
-    check_bootTime()
-    print('\n -- System Users List -- ')
-    user_profiles()
-    generated_report()
+    def get_boot_time(self):
+        try:
+            boot_time = psutil.boot_time()
+            return boot_time
+        except Exception as e:
+            raise RuntimeError("Error fetching boot time:", e)
+
+    def get_users(self):
+        try:
+            users = psutil.users()
+            return [value[0] for value in users]
+        except Exception as e:
+            raise RuntimeError("Error fetching user profiles:", e)
+
+
+def system_report():
+    try:
+        system_info = SystemInfo()
+
+        print('----- System Info Statistics -----\n')
+        print(' -- Reboot Status -- ')
+        print(f'Status : {system_info.check_reboot()}')
+        print('\n -- System BootTime Analysis -- ')
+        boot_time = system_info.get_boot_time()
+        print("System Boot Time : {} seconds.".format(boot_time))
+        print('System Boot Time : {}'.format(datetime.datetime.fromtimestamp(boot_time).strftime("%Y-%m-%d %H:%M:%S")))
+        print('\n -- System Users List -- ')
+        users = system_info.get_users()
+        for user in users:
+            print("Users : {}".format(user))
+
+        TimeStampGenerator.generate_report()
+    except RuntimeError as e:
+        print("An error occurred:", e)
+
 
 if __name__ == "__main__":
-    systemReport()
+    system_report()
     sys.exit(0)
