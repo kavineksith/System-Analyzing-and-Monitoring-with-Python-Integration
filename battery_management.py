@@ -1,31 +1,50 @@
-import psutil # importing psutil library
-from report_signatures import generated_report # importing date-time stamp generator library
-import sys # importing sys library
+import psutil
+from report_signatures import TimeStampGenerator
+import sys
 
-# convert seconds to standard time format and return that value to main function
-def convertTime(seconds): 
-	minutes, seconds = divmod(seconds, 60) 
-	hours, minutes = divmod(minutes, 60) 
-	return '%d:%02d:%02d' % (hours, minutes, seconds)
 
-# checking power connectivity status
-def battery_status(status):
-	if status == True:
-		return 'Plugged..!!'
-	else:
-		return 'Unplugged..!!' 
+class BatteryManager:
+    def __init__(self):
+        self.battery = None
 
-def batteryManagement():
-	battery = psutil.sensors_battery() # assign battery variable to psutil battery function
-	print('----- Battery Usage Statistics -----\n')
-	print(f"{'-'*32}\n")
-	print('Battery percentage : {} %'.format(battery.percent)) # percentage of battery
-	print('Power plugged in : {}'.format(battery_status(battery.power_plugged))) # power connectivity status
-	print('Battery left : {}'.format(convertTime(battery.secsleft))) # remaining time of battery
-	print(f"\n{'-'*32}")
-	generated_report() # calling to date-time stamp function
+    # Function to determine power connectivity status
+    def battery_status(self, status):
+        return 'Plugged..!!' if status else 'Unplugged..!!'
+
+    # Function to retrieve battery information
+    def get_battery_info(self):
+        try:
+            self.battery = psutil.sensors_battery()  # Attempt to retrieve battery information
+        except Exception as e:
+            print(f"Error: {e}")
+            sys.exit(1)  # Exit program with error code 1 if battery retrieval fails
+
+    # Function to print battery statistics
+    def print_battery_stats(self):
+        if not self.battery:
+            print("Error: Failed to retrieve battery information.")
+            sys.exit(1)  # Exit program with error code 1 if battery information is not available
+
+        print('----- Battery Usage Statistics -----\n')
+        print(f"{'-' * 32}\n")
+        print('Battery percentage : {} %'.format(self.battery.percent))
+        print('Power plugged in : {}'.format(self.battery_status(self.battery.power_plugged)))
+
+        if self.battery.power_plugged:
+            print('Charging status: {}'.format("Charging" if self.battery.percent < 100 else "Fully Charged"))
+        else:
+            try:
+                status = TimeStampGenerator().convertTime(self.battery.secsleft)
+                print(f'Battery left: {status}')
+            except Exception as e:
+                print(f"Error: {e}")  # Print error message if timestamp conversion fails
+
+        print(f"\n{'-' * 32}")
+        TimeStampGenerator().generate_report()  # Generate timestamp report
+
 
 if __name__ == "__main__":
-	batteryManagement()
-	sys.exit(0)
-	
+    battery_manager = BatteryManager()  # Create BatteryManager object
+    battery_manager.get_battery_info()  # Retrieve battery information
+    battery_manager.print_battery_stats()  # Print battery statistics
+    sys.exit(0)  # Exit program with success code 0
