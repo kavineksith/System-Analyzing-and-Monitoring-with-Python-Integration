@@ -1,41 +1,62 @@
+import json
+import sys
 import psutil
 from report_signatures import TimeStampGenerator
-import sys
 
 
 class DiskManager:
     def __init__(self):
-        self.partitions = []
+        self.partitions = []  # Initialize as an empty list
 
     # Function to generate storage overall report
     def generate_overall_report(self):
         try:
-            print('\n---- Storage Overall Report ----\n')
+            partition_info = []
+            # Storage Overall Report
             local_partitions = psutil.disk_partitions()
             for partition in local_partitions:
-                print('Device : {}, MountPoint : {}, FileSystem Type : {}, OPTS : {}, MaxFile : {}, MaxPath : {}'.format(partition[0], partition[1], partition[2], partition[3], partition[4], partition[5]))
-                self.partitions.append(partition[0])
+                partition_dict = {
+                    "Device": partition.device,
+                    "MountPoint": partition.mountpoint,
+                    "FileSystemType": partition.fstype,
+                    "Opts": partition.opts,
+                    "MaxFile": partition.maxfile,
+                    "MaxPath": partition.maxpath
+                }
+                self.partitions.append(partition.device)  # Store device name only
+                partition_info.append(partition_dict)
+            return partition_info
         except Exception as e:
-            print(f"Error: {e}")
-            sys.exit(1)
+            print(f"Error generating overall report: {e}")
+            return []  # Return empty list if error occurs
 
     # Function to generate storage statistics report
     def generate_statistics_report(self):
         try:
-            print('\n---- Storage Statistics Report ----\n')
+            disk_info = []
+            # Storage Statistics Report
             for partition in self.partitions:
                 usage = psutil.disk_usage(partition)
-                print("Local Disk : '{}'".format(partition))
-                print(f'Total : {usage.total / (1024 ** 3):.2f} GB , Used : {usage.used / (1024 ** 3):.2f} GB , Free : {usage.free / (1024 ** 3):.2f} GB')
-                print(f'Percentages : Used Space - {usage.percent} %, Free Space - {(usage.free / usage.total * 100):.1f} %')
+                disk_dict = {
+                    "Local Disk": partition,
+                    "Total": f"{usage.total / (1024 ** 3):.2f} GB",
+                    "Used": f"{usage.used / (1024 ** 3):.2f} GB",
+                    "Free": f"{usage.free / (1024 ** 3):.2f} GB",
+                    "Percentage Used": f"{usage.percent} %",
+                    "Percentage Free": f"{(usage.free / usage.total * 100):.1f} %"
+                }
+                disk_info.append(disk_dict)
+
+            return disk_info
         except Exception as e:
-            print(f"Error: {e}")
-            sys.exit(1)
+            print(f"Error generating statistics report: {e}")
+            return []  # Return empty list if error occurs
 
     # Function to check storage level
     def check_storage_level(self):
         try:
-            print('\n---- Storage Level Checker ----\n')
+            partition_info = []
+            # Storage Level Checker
             for partition in self.partitions:
                 disk = psutil.disk_usage(partition)
                 free_percentage = disk.free / disk.total * 100
@@ -44,26 +65,40 @@ class DiskManager:
                 minimum_percentage = 10
 
                 if free_percentage < minimum_percentage or free_gigabytes < minimum_gigabytes:
-                    print("{} - Storage isn't sufficient.".format(partition))
+                    status = "Storage isn't sufficient."
                 else:
-                    print("{} - Storage is sufficient.".format(partition))
-        except Exception as e:
-            print(f"Error: {e}")
-            sys.exit(1)
+                    status = "Storage is sufficient."
 
-    # Function to manage disk statistics
+                partition_dict = {
+                    "Partition": partition,
+                    "Status": status
+                }
+
+                partition_info.append(partition_dict)
+            return partition_info
+        except Exception as e:
+            print(f"Error checking storage level: {e}")
+            return []  # Return empty list if error occurs
+
+    # Function to manage disk statistics and save reports
     def manage_disk(self):
         try:
-            self.generate_overall_report()
-            self.generate_statistics_report()
-            self.check_storage_level()
-            TimeStampGenerator().generate_report()
+            overall_report = self.generate_overall_report()
+            storage_report = self.generate_statistics_report()
+            storage_level = self.check_storage_level()
+
+            statistics = {
+                'Disk Statistics': {
+                    'Storage Overall Report': overall_report,
+                    'Storage Statistics Report': storage_report,
+                    'Storage Level Report': storage_level,
+                    'Generated Time & Date': TimeStampGenerator().generate_report()
+                }
+            }
+
+            result = json.dumps(statistics, indent=4)
+            json_output = json.loads(result)
+            return json_output  # Return the JSON output as a string
         except Exception as e:
             print(f"Error: {e}")
             sys.exit(1)
-
-
-if __name__ == "__main__":
-    disk_manager = DiskManager()
-    disk_manager.manage_disk()
-    sys.exit(0)

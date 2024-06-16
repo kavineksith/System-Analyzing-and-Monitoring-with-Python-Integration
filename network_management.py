@@ -1,3 +1,4 @@
+import json
 import psutil
 import socket
 from report_signatures import TimeStampGenerator
@@ -5,48 +6,61 @@ import sys
 
 
 class NetworkManager:
-    def __init__(self):
-        pass
-
+    @staticmethod
     # Function to check network connectivity
-    def check_network_connectivity(self):
+    def check_network_connectivity():
         try:
             socket.gethostbyname('www.google.com')
-            print("PC is connected to the internet.")
+            status = "PC is connected to the internet."
         except socket.gaierror:
-            print("PC isn't connected to the internet.")
+            status = "PC isn't connected to the internet."
         finally:
             socket.socket(socket.AF_INET, socket.SOCK_STREAM).close()
 
+        return status
+
+    @staticmethod
     # Function to monitor network traffic
-    def monitor_network_traffic(self):
+    def monitor_network_traffic():
         try:
             network = psutil.net_io_counters()
-            print(
-                f'Send : {network.bytes_sent / (1024 ** 2):.2f} Mbps | Received : {network.bytes_recv / (1024 ** 2):.2f} Mbps')
-            print('Extra Information about Network')
-            print(f'Packets Sent : {network.packets_sent} | Packet Received : {network.packets_recv}')
-            print(
-                f'ErrorIn : {network.errin} | ErrorOut : {network.errout} | DropIn : {network.dropin} | DropOut : {network.dropout}')
+            return {
+                'Network Traffic Information': {
+                    'Send': f'{network.bytes_sent / (1024 ** 2):.2f} Mbps',
+                    'Received': f'{network.bytes_recv / (1024 ** 2):.2f} Mbps',
+                },
+                'Extra Information': {
+                    'Packets Sent': f'{network.packets_sent}',
+                    'Packet Received': f'{network.packets_recv}',
+                    'ErrorIn': f'{network.errin}',
+                    'ErrorOut': f'{network.errout}',
+                    'DropIn': f'{network.dropin}',
+                    'DropOut': f'{network.dropout}'
+                }
+            }
         except Exception as e:
             print(f"Error: {e}")
             sys.exit(1)
 
+    @staticmethod
     # Function to manage network statistics
-    def manage_network(self):
+    def network_report():
         try:
-            print('----- Network Usage Statistics -----\n')
-            print(' -- Network Connectivity -- ')
-            self.check_network_connectivity()
-            print('\n -- Network Traffic Analysis -- ')
-            self.monitor_network_traffic()
-            TimeStampGenerator().generate_report()
+            # Network Usage Statistics
+            connectivity = NetworkManager().check_network_connectivity()
+            network_traffic = NetworkManager().monitor_network_traffic()
+
+            statistics = {
+                'Network Usage Statistics': {
+                    'Network Connectivity': connectivity,
+                    'Network Traffic': network_traffic,
+                    'Generated Time & Date': f'{TimeStampGenerator().generate_report()}'
+                }
+            }
+
+            result = json.dumps(statistics, indent=4)
+            json_output = json.loads(result)
+            return json_output  # Return the JSON output as a string
         except Exception as e:
             print(f"Error: {e}")
             sys.exit(1)
-
-
-if __name__ == "__main__":
-    network_manager = NetworkManager()
-    network_manager.manage_network()
-    sys.exit(0)
