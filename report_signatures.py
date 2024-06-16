@@ -17,7 +17,7 @@ class TimeStampGenerator:
     def generate_report():
         current_time = TimeStampGenerator.current_time()
         current_date = TimeStampGenerator.current_date()
-        print(f'\nGenerated Time & Date : {current_time} | {current_date}')
+        return f'{current_time} | {current_date}'
 
     @staticmethod
     # # convert seconds to standard time format and return that value
