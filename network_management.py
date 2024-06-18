@@ -1,11 +1,24 @@
 import json
 import psutil
 import socket
-from report_signatures import TimeStampGenerator
 import sys
+from report_signatures import TimeStampGenerator
 
 
 class NetworkManager:
+    @staticmethod
+    # Function to check localhost connectivity
+    def check_localhost_connectivity():
+        try:
+            socket.gethostbyname('127.0.0.1')
+            status = "PC is connected to localhost."
+        except socket.gaierror:
+            status = "PC isn't connected to localhost."
+        finally:
+            socket.socket(socket.AF_INET, socket.SOCK_STREAM).close()
+
+        return status
+
     @staticmethod
     # Function to check network connectivity
     def check_network_connectivity():
@@ -47,12 +60,14 @@ class NetworkManager:
     def network_report():
         try:
             # Network Usage Statistics
-            connectivity = NetworkManager().check_network_connectivity()
+            localhost_connectivity = NetworkManager().check_localhost_connectivity()
+            network_connectivity = NetworkManager().check_network_connectivity()
             network_traffic = NetworkManager().monitor_network_traffic()
 
             statistics = {
                 'Network Usage Statistics': {
-                    'Network Connectivity': connectivity,
+                    'Localhost Connectivity': localhost_connectivity,
+                    'Network Connectivity': network_connectivity,
                     'Network Traffic': network_traffic,
                     'Generated Time & Date': f'{TimeStampGenerator().generate_report()}'
                 }
